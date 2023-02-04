@@ -1,6 +1,6 @@
-import React from "react";
-import { UsersAPI } from "../api";
-import { User } from "../models";
+import React from 'react';
+import { UsersAPI } from '../api';
+import { User } from '../models';
 
 interface UsersContextValue {
   /** List of users returned from the server. */
@@ -10,29 +10,26 @@ interface UsersContextValue {
   /** Dislike a user and go to the next one. */
   dislikeUser: (userId: string) => Promise<void>;
   /** Like a user and go to the next one. */
-  likeUser: (userId: string) => Promise<void>;
+  likeUser: (userId: string) => Promise<boolean>;
 }
 
 const UsersContext = React.createContext<UsersContextValue>({
   users: [],
   loadUsers: async () => {},
   dislikeUser: async () => {},
-  likeUser: async () => {},
+  likeUser: async () => false,
 });
 
 /**
  * A context provider used for anything related to users.
  */
-export function UsersProvider(props: {
-  children: React.ReactNode;
-}): React.ReactElement {
+export function UsersProvider(props: { children: React.ReactNode }): React.ReactElement {
   const { children } = props;
   const [users, setUsers] = React.useState<User[]>([]);
 
   // Load users
   const loadUsers = React.useCallback(async () => {
     const result = await UsersAPI.loadUsers();
-
     setUsers((prev) => [...prev, ...result.users]);
   }, []);
 
@@ -40,11 +37,11 @@ export function UsersProvider(props: {
   const dislikeUser = React.useCallback(
     async (userId: string) => {
       const result = await UsersAPI.dislikeUser(userId);
-      setUsers((prev) => {
-        let temp = [...prev];
-        temp.splice(0, 1);
-        return temp;
-      });
+      // setUsers((prev) => {
+      //   let temp = [...prev];
+      //   temp.splice(0, 1);
+      //   return temp;
+      // });
     },
     [users]
   );
@@ -53,11 +50,12 @@ export function UsersProvider(props: {
   const likeUser = React.useCallback(
     async (userId: string) => {
       const result = await UsersAPI.likeUser(userId);
-      setUsers((prev) => {
-        let temp = [...prev];
-        temp.splice(0, 1);
-        return temp;
-      });
+      return result.matched;
+      // setUsers((prev) => {
+      //   let temp = [...prev];
+      //   temp.splice(0, 1);
+      //   return temp;
+      // });
     },
     [users]
   );
@@ -72,9 +70,7 @@ export function UsersProvider(props: {
     };
   }, [users, loadUsers, dislikeUser, likeUser]);
 
-  return (
-    <UsersContext.Provider value={value}>{children}</UsersContext.Provider>
-  );
+  return <UsersContext.Provider value={value}>{children}</UsersContext.Provider>;
 }
 
 /** A hook to manipulate users  */
